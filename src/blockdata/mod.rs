@@ -20,13 +20,8 @@
 
 pub mod constants;
 pub mod opcodes;
-#[cfg(not(feature="broken_consensus_code"))] pub mod script;
+pub mod script;
 pub mod transaction;
 pub mod block;
 pub mod blockchain;
 
-#[cfg(feature="broken_consensus_code")]
-/// # Script -- including consensus code
-pub mod script {
-    include!("script_consensus.rs");
-}
