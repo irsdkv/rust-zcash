@@ -505,8 +505,6 @@ impl serde::Deserialize for Script {
     fn deserialize<D>(d: &mut D) -> Result<Script, D::Error>
         where D: serde::Deserializer
     {
-        use serialize::hex::FromHex;
-
         struct ScriptVisitor;
         impl serde::de::Visitor for ScriptVisitor {
             type Value = Script;
@@ -520,7 +518,7 @@ impl serde::Deserialize for Script {
             fn visit_str<E>(&mut self, hex_str: &str) -> Result<Script, E>
                 where E: serde::de::Error
             {
-                let raw_vec: Vec<u8> = try!(hex_str.from_hex()
+                let raw_vec: Vec<u8> = try!(::hex::decode(hex_str)
                                                    .map_err(|_| serde::de::Error::syntax("bad script hex")));
                 Ok(Script::from(raw_vec))
             }
@@ -547,7 +545,7 @@ impl<D: SimpleDecoder> ConsensusDecodable<D> for Script {
 
 #[cfg(test)]
 mod test {
-    use serialize::hex::FromHex;
+    use hex::decode as hex_decode;
 
     use super::*;
     use super::build_scriptint;
@@ -578,7 +576,7 @@ mod test {
         // data
         script = script.push_slice("NRA4VR".as_bytes()); comp.extend([6u8, 78, 82, 65, 52, 86, 82].iter().cloned()); assert_eq!(&script[..], &comp[..]);
 
-        // opcodes 
+        // opcodes
         script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
         script = script.push_opcode(opcodes::All::OP_CHECKSIG); comp.push(0xACu8); assert_eq!(&script[..], &comp[..]);
     }
@@ -588,7 +586,7 @@ mod test {
         // from txid 3bb5e6434c11fb93f64574af5d116736510717f2c595eb45b52c28e31622dfff which was in my mempool when I wrote the test
         let script = Builder::new().push_opcode(opcodes::All::OP_DUP)
                                    .push_opcode(opcodes::All::OP_HASH160)
-                                   .push_slice(&"16e1ae70ff0fa102905d4af297f6912bda6cce19".from_hex().unwrap())
+                                   .push_slice(&hex_decode("16e1ae70ff0fa102905d4af297f6912bda6cce19").unwrap())
                                    .push_opcode(opcodes::All::OP_EQUALVERIFY)
                                    .push_opcode(opcodes::All::OP_CHECKSIG)
                                    .into_script();
@@ -597,7 +595,7 @@ mod test {
 
     #[test]
     fn script_serialize() {
-        let hex_script = "6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52".from_hex().unwrap();
+        let hex_script = hex_decode("6c493046022100f93bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b069a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447c52").unwrap();
         let script: Result<Script, _> = deserialize(&hex_script);
         assert!(script.is_ok());
         assert_eq!(serialize(&script.unwrap()).ok(), Some(hex_script));

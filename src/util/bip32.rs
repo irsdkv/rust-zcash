@@ -471,7 +471,7 @@ impl FromBase58 for ExtendedPubKey {
 #[cfg(test)]
 mod tests {
     use secp256k1::{self, Secp256k1};
-    use serialize::hex::FromHex;
+    use hex::decode as hex_decode;
 
     use network::constants::Network::{self, Bitcoin};
     use util::base58::{FromBase58, ToBase58};
@@ -516,7 +516,7 @@ mod tests {
     #[test]
     fn test_vector_1() {
         let secp = Secp256k1::new();
-        let seed = "000102030405060708090a0b0c0d0e0f".from_hex().unwrap();
+        let seed = hex_decode("000102030405060708090a0b0c0d0e0f").unwrap();
         // m
         test_path(&secp, Bitcoin, &seed, &[],
                   "xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi",
@@ -551,7 +551,7 @@ mod tests {
     #[test]
     fn test_vector_2() {
         let secp = Secp256k1::new();
-        let seed = "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542".from_hex().unwrap();
+        let seed = hex_decode("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542").unwrap();
 
         // m
         test_path(&secp, Bitcoin, &seed, &[],

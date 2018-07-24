@@ -43,10 +43,10 @@
 
 extern crate byteorder;
 extern crate crypto;
-#[macro_use] extern crate jsonrpc;
+extern crate jsonrpc;
 extern crate num;
+extern crate hex;
 extern crate rand;
-extern crate rustc_serialize as serialize;
 extern crate secp256k1;
 extern crate serde;
 extern crate strason;

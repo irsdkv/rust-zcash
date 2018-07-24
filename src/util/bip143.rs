@@ -99,8 +99,7 @@ impl SighashComponents {
 
 #[cfg(test)]
 mod tests {
-    use serialize::hex::FromHex;
-
+    use blockdata::transaction::Transaction;
     use network::serialize::deserialize;
     use util::misc::hex_bytes;
 

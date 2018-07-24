@@ -239,7 +239,7 @@ impl FromBase58 for Privkey {
 mod tests {
     use secp256k1::Secp256k1;
     use secp256k1::key::PublicKey;
-    use serialize::hex::FromHex;
+    use hex::decode as hex_decode;
 
     use blockdata::script::Script;
     use network::constants::Network::{Bitcoin, Testnet};
@@ -247,7 +247,7 @@ mod tests {
     use util::base58::{FromBase58, ToBase58};
     use super::*;
 
-    macro_rules! hex (($hex:expr) => ($hex.from_hex().unwrap()));
+    macro_rules! hex (($hex:expr) => (hex_decode($hex).unwrap()));
     macro_rules! hex_key (($secp:expr, $hex:expr) => (PublicKey::from_slice($secp, &hex!($hex)).unwrap()));
     macro_rules! hex_script (($hex:expr) => (Script::from(hex!($hex))));
 
@@ -256,7 +256,7 @@ mod tests {
         let addr = Address {
             ty: Type::PubkeyHash,
             network: Bitcoin,
-            hash: Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            hash: Hash160::from(&hex_decode("162c5ea71c0b23f5b9022ef047c4a86470a5b070").unwrap()[..]),
         };
 
         assert_eq!(addr.script_pubkey(), hex_script!("76a914162c5ea71c0b23f5b9022ef047c4a86470a5b07088ac"));
@@ -282,7 +282,7 @@ mod tests {
         let addr = Address {
             ty: Type::ScriptHash,
             network: Bitcoin,
-            hash: Hash160::from(&"162c5ea71c0b23f5b9022ef047c4a86470a5b070".from_hex().unwrap()[..])
+            hash: Hash160::from(&hex_decode("162c5ea71c0b23f5b9022ef047c4a86470a5b070").unwrap()[..]),
         };
 
         assert_eq!(addr.script_pubkey(), hex_script!("a914162c5ea71c0b23f5b9022ef047c4a86470a5b07087"));
