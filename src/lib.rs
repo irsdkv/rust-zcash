@@ -43,13 +43,12 @@
 
 extern crate byteorder;
 extern crate crypto;
-extern crate jsonrpc;
 extern crate num;
 extern crate hex;
 extern crate rand;
 extern crate secp256k1;
-extern crate serde;
-extern crate strason;
+#[cfg(feature = "serde")] extern crate serde;
+#[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 
 #[cfg(test)]
@@ -62,4 +61,3 @@ pub mod macros;
 pub mod network;
 pub mod blockdata;
 pub mod util;
-

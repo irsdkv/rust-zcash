@@ -19,7 +19,7 @@
 use std::default::Default;
 use std::io::Cursor;
 use std::{error, fmt};
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
+#[cfg(feature = "serde")] use serde;
 
 use byteorder::{BigEndian, ByteOrder, ReadBytesExt, WriteBytesExt};
 use crypto::digest::Digest;
@@ -103,27 +103,27 @@ impl fmt::Display for ChildNumber {
     }
 }
 
-impl Serialize for ChildNumber {
-    fn serialize<S>(&self, s: &mut S) -> Result<(), S::Error>
-            where S: Serializer {
-        match *self {
-            ChildNumber::Hardened(n) => (n + (1 << 31)).serialize(s),
-            ChildNumber::Normal(n)     => n.serialize(s)
-        }
+/*
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for ChildNumber {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        u32::deserialize(deserializer).map(ChildNumber::from)
     }
 }
 
-impl Deserialize for ChildNumber {
-    fn deserialize<D>(d: &mut D) -> Result<ChildNumber, D::Error>
-            where D: Deserializer {
-        let n: u32 = try!(Deserialize::deserialize(d));
-        if n < (1 << 31) {
-            Ok(ChildNumber::Normal(n))
-        } else {
-            Ok(ChildNumber::Hardened(n - (1 << 31)))
-        }
+#[cfg(feature = "serde")]
+impl serde::Serialize for ChildNumber {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        u32::from(*self).serialize(serializer)
     }
 }
+*/
 
 /// A BIP32 error
 #[derive(Clone, PartialEq, Eq, Debug)]
@@ -585,6 +585,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(all(feature = "serde", feature = "strason"))]
     pub fn encode_decode_childnumber() {
         serde_round_trip!(Normal(0));
         serde_round_trip!(Normal(1));

@@ -15,16 +15,23 @@ readme = "README.md"
 name = "bitcoin"
 path = "src/lib.rs"
 
+[features]
+serde-decimal = ["serde", "strason"]
+
 [dependencies]
 byteorder = "1.1"
 num = "0.1"
 rand = "0.3"
 rust-crypto = "0.2"
-serde = "0.6"
-strason = "0.3"
+bitcoinconsensus = { version = "0.16", optional = true }
 
-[dependencies.jsonrpc]
-version = "0.8" # for serde macros
+[dependencies.serde]
+version = "1"
+optional = true
+
+[dependencies.strason]
+version = "0.4"
+optional = true
 default-features = false
 
 [dependencies.hex]
