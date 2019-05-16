@@ -23,7 +23,7 @@
 //! software.
 //!
 
-#![crate_name = "bitcoin"]
+#![crate_name = "bitcoin_zcash"]
 #![crate_type = "dylib"]
 #![crate_type = "rlib"]
 
@@ -39,7 +39,6 @@
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
 #![deny(unused_mut)]
-#![deny(missing_docs)]
 
 extern crate bitcoin_bech32;
 extern crate byteorder;
@@ -47,10 +46,14 @@ extern crate crypto;
 extern crate hex;
 extern crate rand;
 extern crate secp256k1;
+extern crate blake2_rfc;
 #[cfg(feature = "serde")] extern crate serde;
 #[cfg(feature = "strason")] extern crate strason;
 #[cfg(all(test, feature = "unstable"))] extern crate test;
 #[cfg(feature="bitcoinconsensus")] extern crate bitcoinconsensus;
+
+#[macro_use]
+extern crate num_derive;
 
 #[cfg(test)]
 #[macro_use]

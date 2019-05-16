@@ -69,7 +69,7 @@ impl SighashComponents {
         };
 
         SighashComponents {
-            tx_version: tx.version,
+            tx_version: tx.header as u32,
             tx_locktime: tx.lock_time,
             hash_prevouts: hash_prevouts,
             hash_sequence: hash_sequence,

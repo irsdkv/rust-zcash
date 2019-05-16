@@ -23,7 +23,7 @@ use std::default::Default;
 
 use blockdata::opcodes;
 use blockdata::script;
-use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn};
+use blockdata::transaction::{OutPoint, Transaction, TxOut, TxIn, TxHeader};
 use blockdata::block::{Block, BlockHeader};
 use network::constants::Network;
 use util::misc::hex_bytes;
@@ -57,10 +57,19 @@ pub fn max_money(_: Network) -> u64 {
 fn bitcoin_genesis_tx() -> Transaction {
     // Base
     let mut ret = Transaction {
-        version: 1,
+        header: TxHeader::FourthAndOverwintered,
+        version_group_id: 0x892F2085,
         lock_time: 0,
-        input: vec![],
-        output: vec![],
+        expiry_height: 0,
+        value_balance: 0,
+        shielded_spend: Vec::new(),
+        shielded_output: Vec::new(),
+        join_split: Vec::new(),
+        binding_sig: None,
+        join_split_pubkey: None,
+        join_split_sig: None,
+        input: Vec::new(),
+        output: Vec::new(),
     };
 
     // Inputs
@@ -151,7 +160,7 @@ mod test {
     fn bitcoin_genesis_first_transaction() {
         let gen = bitcoin_genesis_tx();
 
-        assert_eq!(gen.version, 1);
+        //assert_eq!(gen.header, 1);
         assert_eq!(gen.input.len(), 1);
         assert_eq!(gen.input[0].previous_output.txid, Default::default());
         assert_eq!(gen.input[0].previous_output.vout, 0xFFFFFFFF);
@@ -198,4 +207,3 @@ mod test {
                    "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943".to_string());
     }
 }
-

@@ -19,7 +19,7 @@
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-use bitcoin_bech32::{self, WitnessProgram, u5};
+use bitcoin_bech32::{self, WitnessProgram};
 use secp256k1::key::PublicKey;
 
 use blockdata::script;
@@ -28,6 +28,8 @@ use network::constants::Network;
 use network::serialize;
 use util::hash::Hash160;
 use util::base58;
+
+const T_ADDR_LEN : usize = 22;
 
 /// The method used to produce an address
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -55,33 +57,24 @@ impl Address {
     /// Creates a pay to (compressed) public key hash address from a public key
     /// This is the preferred non-witness type address
     #[inline]
-    pub fn p2pkh(pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::PubkeyHash(Hash160::from_data(&pk.serialize()[..]))
-        }
+    pub fn p2pkh(_pk: &PublicKey, _network: Network) -> Address {
+        panic!("p2pkh does not supported");
     }
 
     /// Creates a pay to uncompressed public key hash address from a public key
     /// This address type is discouraged as it uses more space but otherwise equivalent to p2pkh
     /// therefore only adds ambiguity
     #[inline]
-    pub fn p2upkh(pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::PubkeyHash(Hash160::from_data(&pk.serialize_uncompressed()[..]))
-        }
+    pub fn p2upkh(_pk: &PublicKey, _network: Network) -> Address {
+        panic!("p2upkh does not supported");
     }
 
     /// Creates a pay to public key address from a public key
     /// This address type was used in the early history of Bitcoin.
     /// Satoshi's coins are still on addresses of this type.
     #[inline]
-    pub fn p2pk(pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::Pubkey(*pk)
-        }
+    pub fn p2pk(_pk: &PublicKey, _network: Network) -> Address {
+        panic!("p2pk does not supported");
     }
 
     /// Creates a pay to script hash P2SH address from a script
@@ -96,72 +89,28 @@ impl Address {
 
     /// Create a witness pay to public key address from a public key
     /// This is the native segwit address type for an output redemable with a single signature
-    pub fn p2wpkh (pk: &PublicKey, network: Network) -> Address {
-        Address {
-            network: network,
-            payload: Payload::WitnessProgram(
-                // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(u5::try_from_u8(0).expect("0<32"),
-                                    Hash160::from_data(&pk.serialize()[..])[..].to_vec(),
-                                    Address::bech_network(network)).unwrap())
-        }
+    pub fn p2wpkh (_pk: &PublicKey, _network: Network) -> Address {
+        panic!("p2wpkh does not supported");
     }
 
     /// Create a pay to script address that embeds a witness pay to public key
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
-    pub fn p2shwpkh (pk: &PublicKey, network: Network) -> Address {
-        let builder = script::Builder::new()
-            .push_int(0)
-            .push_slice(&Hash160::from_data(&pk.serialize()[..])[..]);
-        Address {
-            network: network,
-            payload: Payload::ScriptHash(
-                Hash160::from_data(builder.into_script().as_bytes())
-            )
-        }
+    pub fn p2shwpkh (_pk: &PublicKey, _network: Network) -> Address {
+        panic!("p2shwpkh does not supported");
     }
 
     /// Create a witness pay to script hash address
-    pub fn p2wsh (script: &script::Script, network: Network) -> Address {
-        use crypto::sha2::Sha256;
-        use crypto::digest::Digest;
-
-        let mut digest = Sha256::new();
-        digest.input(script.as_bytes());
-        let mut d = [0u8; 32];
-        digest.result(&mut d);
-
-        Address {
-            network: network,
-            payload: Payload::WitnessProgram(
-                // unwrap is safe as witness program is known to be correct as above
-                WitnessProgram::new(
-                    u5::try_from_u8(0).expect("0<32"),
-                    d.to_vec(),
-                    Address::bech_network(network)
-                ).unwrap()
-            )
-        }
+    pub fn p2wsh (_script: &script::Script, _network: Network) -> Address {
+        panic!("p2wsh does not supported");
     }
 
     /// Create a pay to script address that embeds a witness pay to script hash address
     /// This is a segwit address type that looks familiar (as p2sh) to legacy clients
-    pub fn p2shwsh (script: &script::Script, network: Network) -> Address {
-        use crypto::sha2::Sha256;
-        use crypto::digest::Digest;
-
-        let mut digest = Sha256::new();
-        digest.input(script.as_bytes());
-        let mut d = [0u8; 32];
-        digest.result(&mut d);
-        let ws = script::Builder::new().push_int(0).push_slice(&d).into_script();
-
-        Address {
-            network: network,
-            payload: Payload::ScriptHash(Hash160::from_data(ws.as_bytes()))
-        }
+    pub fn p2shwsh (_script: &script::Script, _network: Network) -> Address {
+        panic!("p2shwsh does not supported");
     }
 
+    #[allow(dead_code)]
     #[inline]
     /// convert Network to bech32 network (this should go away soon)
     fn bech_network (network: Network) -> bitcoin_bech32::constants::Network {
@@ -194,10 +143,8 @@ impl Address {
                     .push_slice(&hash[..])
                     .push_opcode(opcodes::All::OP_EQUAL)
             },
-            Payload::WitnessProgram(ref witprog) => {
-                script::Builder::new()
-                    .push_int(witprog.version().to_u8() as i64)
-                    .push_slice(witprog.program())
+            Payload::WitnessProgram(ref _witprog) => {
+                panic!("WitnessProgram does not supported");
             }
         }.into_script()
     }
@@ -207,36 +154,34 @@ impl Display for Address {
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
         match self.payload {
             // note: serialization for pay-to-pk is defined, but is irreversible
-            Payload::Pubkey(ref pk) => {
-                let hash = &Hash160::from_data(&pk.serialize_uncompressed()[..]);
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => 0,
-                    Network::Testnet | Network::Regtest => 111,
-                };
-                prefixed[1..].copy_from_slice(&hash[..]);
-                base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
+            Payload::Pubkey(ref _pk) => {
+                panic!("Pubkey does not supported");
             },
             Payload::PubkeyHash(ref hash) => {
-                let mut prefixed = [0; 21];
+                let mut prefixed = [0; T_ADDR_LEN];
                 prefixed[0] = match self.network {
-                    Network::Bitcoin => 0,
-                    Network::Testnet | Network::Regtest => 111,
+                    Network::Bitcoin => 0x1C,
+                    Network::Testnet | Network::Regtest => 0x1D,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[1] = match self.network {
+                    Network::Bitcoin => 0xB8,
+                    Network::Testnet | Network::Regtest => 0x25,
+                };
+                prefixed[2..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             },
             Payload::ScriptHash(ref hash) => {
-                let mut prefixed = [0; 21];
-                prefixed[0] = match self.network {
-                    Network::Bitcoin => 5,
-                    Network::Testnet | Network::Regtest => 196,
+                let mut prefixed = [0; T_ADDR_LEN];
+                prefixed[0] = 0x1C;
+                prefixed[1] = match self.network {
+                    Network::Bitcoin => 0xBD,
+                    Network::Testnet | Network::Regtest => 0xBA,
                 };
-                prefixed[1..].copy_from_slice(&hash[..]);
+                prefixed[2..].copy_from_slice(&hash[..]);
                 base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
             },
-            Payload::WitnessProgram(ref witprog) => {
-                fmt.write_str(&witprog.to_address())
+            Payload::WitnessProgram(ref _witprog) => {
+                panic!("WitnessProgram does not supported");
             },
         }
     }
@@ -251,20 +196,7 @@ impl FromStr for Address {
            s.starts_with("tb1") || s.starts_with("TB1") ||
            s.starts_with("bcrt1") || s.starts_with("BCRT1")
         {
-            let witprog = WitnessProgram::from_address(s)?;
-            let network = match witprog.network() {
-                bitcoin_bech32::constants::Network::Bitcoin => Network::Bitcoin,
-                bitcoin_bech32::constants::Network::Testnet => Network::Testnet,
-                bitcoin_bech32::constants::Network::Regtest => Network::Regtest,
-                _ => panic!("unknown network")
-            };
-            if witprog.version().to_u8() != 0 {
-                return Err(serialize::Error::UnsupportedWitnessVersion(witprog.version().to_u8()));
-            }
-            return Ok(Address {
-                network: network,
-                payload: Payload::WitnessProgram(witprog)
-            });
+            panic!("Wrong address!");
         }
 
         if s.len() > 50 {
@@ -274,28 +206,28 @@ impl FromStr for Address {
         // Base 58
         let data = base58::from_check(s)?;
 
-        if data.len() != 21 {
+        if data.len() != T_ADDR_LEN {
             return Err(serialize::Error::Base58(base58::Error::InvalidLength(data.len())));
         }
 
-        let (network, payload) = match data[0] {
-            0 => (
-                Network::Bitcoin,
-                Payload::PubkeyHash(Hash160::from(&data[1..]))
-            ),
-            5 => (
-                Network::Bitcoin,
-                Payload::ScriptHash(Hash160::from(&data[1..]))
-            ),
-            111 => (
+        let (network, payload) = match &data[0..2] {
+            [0x1D, 0x25] => (
                 Network::Testnet,
-                Payload::PubkeyHash(Hash160::from(&data[1..]))
+                Payload::PubkeyHash(Hash160::from(&data[2..]))
             ),
-            196 => (
+            [0x1C, 0xBD] => (
+                Network::Bitcoin,
+                Payload::ScriptHash(Hash160::from(&data[2..]))
+            ),
+            [0x1C, 0xB8] => (
+                Network::Bitcoin,
+                Payload::PubkeyHash(Hash160::from(&data[2..]))
+            ),
+            [0x1C, 0xBA] => (
                 Network::Testnet,
-                Payload::ScriptHash(Hash160::from(&data[1..]))
+                Payload::ScriptHash(Hash160::from(&data[2..]))
             ),
-            x   => return Err(serialize::Error::Base58(base58::Error::InvalidVersion(vec![x])))
+            _   => return Err(serialize::Error::Base58(base58::Error::Other("Invalid version".to_string())))
         };
 
         Ok(Address {
@@ -466,4 +398,3 @@ mod tests {
         assert!(Address::from_str(addrstr).is_err());
     }
 }
-
